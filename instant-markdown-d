@@ -1,6 +1,21 @@
 #!/usr/bin/env node
 
+const options = {
+  openMarker: '```plantuml',
+  closeMarker: '```',
+  generateSource: function generateSource(umlCode) {
+    var deflate = require('markdown-it-plantuml/lib/deflate.js');
+    var zippedCode =
+      deflate.encode64(deflate.zip_deflate('@startuml\n' + umlCode + '\n@enduml', 9));
+    return 'http://gitlab.sambaserver.eprosima.com:8090/png/' + zippedCode;
+  }
+}
+
 var MarkdownIt = require('markdown-it');
+var MarkdownItTaskCheckbox = require('markdown-it-task-checkbox');
+var MarkdownItEmoji = require('markdown-it-emoji');
+var MarkdownItGitHubHeadings = require('markdown-it-github-headings');
+var MarkdownItPlantUML = require('markdown-it-plantuml');
 var hljs = require('highlight.js');
 var server = require('http').createServer(httpHandler),
     exec = require('child_process').exec,
@@ -34,6 +49,11 @@ var md = new MarkdownIt({
     }
   }
 });
+
+md.use(MarkdownItTaskCheckbox);
+md.use(MarkdownItEmoji);
+md.use(MarkdownItGitHubHeadings, { prefix: ''});
+md.use(MarkdownItPlantUML, options);
 
 var lastWrittenMarkdown = '';
 function writeMarkdown(body) {
